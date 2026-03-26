@@ -2,23 +2,39 @@
 
 Android live wallpaper that renders animated GLSL shader effects through a hexagonal grid of point sprites using OpenGL ES 2.0. Includes 25 shader effects with per-shader configuration (detail level, animation speed, colors).
 
-Reverse-engineered from the [Google Play version](https://play.google.com/store/apps/details?id=ru.serjik.hexshaders.premium) (v2.2.2, versionCode 25). Original author: [KonyukhovSergey](https://github.com/KonyukhovSergey/HexShaders).
+Based on [HexShaders](https://github.com/KonyukhovSergey/HexShaders) by [KonyukhovSergey](https://github.com/KonyukhovSergey).
 
-## Changes from the GP version
+## Features
 
-- Fully deobfuscated source (ProGuard → meaningful class/method names)
-- Fixed wallpaper accent colors for Android 12+ (Material You) — system theme now matches the active shader instead of always being orange
-- Modernized build: Gradle 8.12, AGP 8.8.2, compileSdk/targetSdk 36, Java 17
+- 25 animated GLSL shader effects (flame, water, galaxy, metaballs, etc.)
+- Per-shader settings: detail level, animation speed, RGB color customization
+- FPS-adaptive rendering for battery efficiency
+- Dynamic WallpaperColors (Android 12+) — system accent matches the active shader and user color choices
+- Slideshow rendering mode with triple-buffered render-to-texture
 
 ## Building
 
 Requires Android SDK with platform 36 and JDK 17+.
 
 ```
-./gradlew assembleDebug
+./gradlew :app:assembleDebug
 ```
 
-APK will be at `build/outputs/apk/debug/HexShadersPremium-debug.apk`.
+APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Install
+
+```
+./gradlew :app:installDebug
+```
+
+## Tech Stack
+
+- Kotlin, Android SDK 36 (minSdk 21)
+- OpenGL ES 2.0 with GLSL shaders
+- ViewBinding
+- R8 minification + resource shrinking for release builds
+- Gradle 8.12, AGP 8.8.2
 
 ## License
 
