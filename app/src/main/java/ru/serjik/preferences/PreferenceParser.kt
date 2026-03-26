@@ -85,7 +85,7 @@ object PreferenceParser {
             PreferenceEntry(parts[0], parts[1], store),
             container.context
         )
-        container.addView(controller.getView())
+        container.addView(controller.view)
         return controller
     }
 }

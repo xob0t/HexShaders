@@ -2,42 +2,40 @@ package ru.serjik.preferences
 
 import android.content.Context
 import android.view.View
+import ru.serjik.preferences.controllers.*
 
 abstract class PreferenceController {
-    @JvmField
-    protected var preferenceEntry: PreferenceEntry? = null
+    var preferenceEntry: PreferenceEntry? = null
+        internal set
 
-    @JvmField
-    protected var context: Context? = null
+    var context: Context? = null
+        internal set
 
-    @JvmField
-    protected var view: View? = null
+    var view: View? = null
+        internal set
 
     private var density: Float = -1.0f
 
     protected fun dp(px: Int): Int = ((px * density) + 0.5f).toInt()
 
-    fun getView(): View? = view
-
     protected abstract fun createView(params: Array<String>): View
 
-    fun getPreferenceEntry(): PreferenceEntry? = preferenceEntry
-
     companion object {
-        @JvmStatic
         fun create(typeName: String, params: Array<String>, entry: PreferenceEntry, context: Context): PreferenceController {
-            val className = "ru.serjik.preferences.controllers.${typeName}Controller"
-            try {
-                val controller = Class.forName(className).getDeclaredConstructor().newInstance() as PreferenceController
-                controller.preferenceEntry = entry
-                controller.context = context
-                controller.density = context.resources.displayMetrics.density
-                controller.view = controller.createView(params)
-                return controller
-            } catch (e: Exception) {
-                e.printStackTrace()
-                throw RuntimeException("can't instantiate: $className")
+            val controller = when (typeName) {
+                "Range" -> RangeController()
+                "Integer" -> IntegerController()
+                "CheckBox" -> CheckBoxController()
+                "RGB" -> RGBController()
+                "Copyright" -> CopyrightController()
+                "Separator" -> SeparatorController()
+                else -> throw IllegalArgumentException("Unknown controller type: $typeName")
             }
+            controller.preferenceEntry = entry
+            controller.context = context
+            controller.density = context.resources.displayMetrics.density
+            controller.view = controller.createView(params)
+            return controller
         }
     }
 }

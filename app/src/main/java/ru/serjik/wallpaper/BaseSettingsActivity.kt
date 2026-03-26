@@ -29,11 +29,15 @@ abstract class BaseSettingsActivity : Activity() {
         window.decorView.findViewWithTag<View>("ui").visibility = View.VISIBLE
     }
 
-    private fun sendDropContextCommand() {
-        val intent = Intent(this, wallpaperServiceClass).apply {
-            putExtra("cmd", "dropContext")
-        }
-        startService(intent)
+    /**
+     * Notifies the wallpaper service to reload by writing a signal to SharedPreferences.
+     * The service listens for changes via OnSharedPreferenceChangeListener.
+     */
+    private fun notifyServiceReload() {
+        val prefs = getSharedPreferences("application_store", MODE_PRIVATE)
+        prefs.edit()
+            .putLong("reload_signal", System.currentTimeMillis())
+            .apply()
     }
 
     private fun setupHideButton() {
@@ -117,7 +121,7 @@ abstract class BaseSettingsActivity : Activity() {
 
     override fun onPause() {
         super.onPause()
-        sendDropContextCommand()
+        notifyServiceReload()
     }
 
     override fun onResume() {

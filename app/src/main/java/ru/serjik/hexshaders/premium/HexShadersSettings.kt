@@ -96,8 +96,8 @@ class HexShadersSettings : BaseSettingsActivity() {
     /** Resets all preference controllers to default values and reloads settings. */
     private fun resetToDefaults() {
         for (controller in controllers) {
-            controller.getPreferenceEntry()?.getListeners()?.clear()
-            controller.getPreferenceEntry()?.reset()
+            controller.preferenceEntry?.getListeners()?.clear()
+            controller.preferenceEntry?.reset()
         }
         reloadShaderSettings()
     }
@@ -115,7 +115,7 @@ class HexShadersSettings : BaseSettingsActivity() {
         }
         controllers = PreferenceParser.createControllers(binding.layoutSettings, prefTokens, shaderStore).toMutableList()
         for (controller in controllers) {
-            controller.getPreferenceEntry()?.getListeners()?.addListener(preferenceChangeListener)
+            controller.preferenceEntry?.getListeners()?.addListener(preferenceChangeListener)
         }
         renderer?.resetContext()
     }

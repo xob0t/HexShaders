@@ -1,7 +1,7 @@
 package ru.serjik.wallpaper
 
 import android.app.WallpaperColors
-import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 import android.opengl.GLSurfaceView
 import android.os.Build
@@ -25,17 +25,6 @@ abstract class GLWallpaperService : WallpaperService(), RendererFactory, Wallpap
         return engine
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        intent?.extras?.let { extras ->
-            if ("dropContext" == extras.getString("cmd")) {
-                for (engine in engines) {
-                    engine.renderer?.resetContext()
-                }
-            }
-        }
-        return super.onStartCommand(intent, flags, startId)
-    }
-
     /**
      * Returns the current shader name from shared preferences.
      * Subclasses can override if they store the shader name differently.
@@ -52,6 +41,18 @@ abstract class GLWallpaperService : WallpaperService(), RendererFactory, Wallpap
         private var offsetChangeCounter = 0
         private var lastKnownShaderName: String? = null
 
+        /**
+         * SharedPreferences listener that triggers context reload when settings change.
+         * Replaces the old startService() IPC mechanism.
+         */
+        private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "reload_signal") {
+                renderer?.resetContext()
+            }
+        }
+
+        private var prefs: SharedPreferences? = null
+
         private fun resetOffsetTracking() {
             offsetsActivated = false
             lastOffsetValue = 0.0f
@@ -64,10 +65,15 @@ abstract class GLWallpaperService : WallpaperService(), RendererFactory, Wallpap
             val surfaceView = WallpaperGLSurfaceView(this@GLWallpaperService)
             renderer = this@GLWallpaperService.createRenderer(surfaceView)
             SerjikLog.logWithCaller(renderer.toString())
+
+            // Register SharedPreferences listener for reload signals
+            prefs = getSharedPreferences("application_store", MODE_PRIVATE)
+            prefs?.registerOnSharedPreferenceChangeListener(prefsListener)
         }
 
         override fun onDestroy() {
             SerjikLog.logWithCaller(" $renderer")
+            prefs?.unregisterOnSharedPreferenceChangeListener(prefsListener)
             renderer?.let { r ->
                 r.pause()
                 r.getSurfaceView().onPause()
