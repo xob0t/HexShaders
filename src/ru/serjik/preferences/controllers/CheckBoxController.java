@@ -27,7 +27,7 @@ public class CheckBoxController extends PreferenceController {
         LinearLayout linearLayout = new LinearLayout(this.context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.setPadding(dp(12), 0, 0, 0);
-        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(-1, -2));
+        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         linearLayout.addView(checkBox);
         return linearLayout;
     }

@@ -53,7 +53,7 @@ public class RangeController extends PreferenceController {
         this.seekBar.setOnSeekBarChangeListener(this.seekBarChangeListener);
         LinearLayout linearLayout = new LinearLayout(this.context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(-1, -2));
+        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         linearLayout.addView(this.labelView);
         linearLayout.addView(this.seekBar);
         return linearLayout;

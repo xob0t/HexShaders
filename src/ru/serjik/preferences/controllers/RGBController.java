@@ -1,5 +1,6 @@
 package ru.serjik.preferences.controllers;
 
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -38,14 +39,14 @@ public class RGBController extends PreferenceController {
     private LinearLayout createChannelRow(SeekBar seekBar, int value, TextView textView) {
         seekBar.setMax(100);
         seekBar.setProgress(value);
-        seekBar.setLayoutParams(new LinearLayout.LayoutParams(1, -2, 1.0f));
-        textView.setLayoutParams(new LinearLayout.LayoutParams(dp(48), -2));
+        seekBar.setLayoutParams(new LinearLayout.LayoutParams(1, ViewGroup.LayoutParams.WRAP_CONTENT, 1.0f));
+        textView.setLayoutParams(new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.WRAP_CONTENT));
         LinearLayout linearLayout = new LinearLayout(this.context);
         linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(-1, -2));
+        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         linearLayout.setPadding(seekBar.getPaddingLeft(), dp(8), dp(0), dp(4));
         linearLayout.addView(textView);
-        linearLayout.setGravity(17);
+        linearLayout.setGravity(Gravity.CENTER_VERTICAL);
         linearLayout.addView(seekBar);
         return linearLayout;
     }
@@ -88,7 +89,7 @@ public class RGBController extends PreferenceController {
         this.blueSeekBar.setOnSeekBarChangeListener(this.seekBarChangeListener);
         LinearLayout linearLayout = new LinearLayout(this.context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(-1, -2));
+        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         linearLayout.addView(titleView);
         linearLayout.addView(redRow);
         linearLayout.addView(greenRow);

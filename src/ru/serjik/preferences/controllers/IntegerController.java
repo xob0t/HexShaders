@@ -1,5 +1,6 @@
 package ru.serjik.preferences.controllers;
 
+import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,11 +36,11 @@ public class IntegerController extends PreferenceController {
         } catch (Exception e) {
             editText.setText(new IntegerValue(this.preferenceEntry.getDefault()).toString());
         }
-        editText.setInputType(4098);
+        editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED);
         editText.setOnEditorActionListener(this.editorActionListener);
         LinearLayout linearLayout = new LinearLayout(this.context);
         linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(-1, -2));
+        linearLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         linearLayout.setPadding(dp(4), dp(8), dp(4), 0);
         linearLayout.addView(this.labelView);
         linearLayout.addView(editText);
