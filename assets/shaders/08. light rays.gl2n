@@ -1,0 +1,96 @@
+// vertex shader
+uniform vec3      iResolution;           // viewport resolution (in pixels)
+uniform float     iGlobalTime;           // shader playback time (in seconds)
+uniform float     iTimeDelta;            // render time (in seconds)
+uniform int       iFrame;                // shader playback frame
+uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
+
+uniform mediump float u_offset;
+attribute mediump vec2 a_pos;
+attribute mediump vec2 t_pos;
+varying lowp vec4 v_col;
+
+vec2 fragCoord;
+// $cprt|https://www.shadertoy.com/view/lljGDt|Copyright|ElusivePete|skip$
+
+/// -----------------------------
+/// $pointsInTheRow|64|Range|Detail level;16;128|skip$
+/// $slides|1|Range|Slide show (battery save);1;11|skip$
+/// $timeScale|10|Range|Time scale;2;20|skip$
+    #define iTime iGlobalTime * 0.1
+/// -----------------------------
+/// shader code before MAIN
+
+float rayStrength(vec2 raySource, vec2 rayRefDirection, vec2 coord, float seedA, float seedB, float speed)
+{
+	vec2 sourceToCoord = coord - raySource;
+	float cosAngle = dot(normalize(sourceToCoord), rayRefDirection);
+	
+	return clamp(
+		(0.45 + 0.15 * sin(cosAngle * seedA + iTime * speed)) +
+		(0.3 + 0.2 * cos(-cosAngle * seedB + iTime * speed)),
+		0.0, 1.0) *
+		clamp((iResolution.x - length(sourceToCoord)) / iResolution.x, 0.5, 1.0);
+}
+
+const vec4 cl1 = vec4(vec3($frc|70,70,70|RGB|First ray color$) * 0.01, 1.0 );
+
+//$s|s|Separator| $
+
+const vec4 cl2 = vec4(vec3($src|50,50,50|RGB|Second ray color$) * 0.01, 1.0);
+
+//$s|s|Separator| $
+
+const vec4 cl = vec4(vec3($attc|20,30,50|RGB|Attenuate color$) * 0.01, 1.0);
+
+
+void main()
+{
+ 	vec2 uv = a_pos*0.5 + 0.5;
+	uv.y = 1.0 - uv.y;
+	vec2 coord = vec2(uv.x*iResolution.x + u_offset*iResolution.x, (uv.y-0.25)*iResolution.y);
+	coord += vec2(iResolution.x*sin(iTime*0.2), iResolution.x*cos(iTime*0.01))*0.3;
+	
+	// Set the parameters of the sun rays
+	vec2 rayPos1 = vec2(iResolution.x * 0.7, iResolution.y * -0.4);
+	vec2 rayRefDir1 = normalize(vec2(1.0, -0.116));
+	float raySeedA1 = 36.2214;
+	float raySeedB1 = 21.11349;
+	float raySpeed1 = 1.5;
+	
+	vec2 rayPos2 = vec2(iResolution.x * 0.8, iResolution.y * -0.6);
+	vec2 rayRefDir2 = normalize(vec2(1.0, 0.241));
+	const float raySeedA2 = 22.39910;
+	const float raySeedB2 = 18.0234;
+	const float raySpeed2 = 1.1;
+	
+	// Calculate the colour of the sun rays on the current fragment
+	vec4 rays1 =
+		cl1 *
+		rayStrength(rayPos1, rayRefDir1, coord, raySeedA1, raySeedB1, raySpeed1);
+	 
+	vec4 rays2 =
+		cl2 *
+		rayStrength(rayPos2, rayRefDir2, coord, raySeedA2, raySeedB2, raySpeed2);
+	
+	v_col = rays1 + rays2;
+	
+	// Attenuate brightness towards the bottom, simulating light-loss due to depth.
+	// Give the whole thing a blue-green tinge as well.
+	float brightness = 1.0 - (coord.y / iResolution.y);
+	
+	v_col *= cl + (brightness * (1.0 - cl));
+	
+    gl_PointSize = 1.0;
+    gl_Position.xy = t_pos * 2.0 - 1.0;
+    gl_Position.zw = vec2(1.0);
+}
+
+====
+// fragment shader
+varying lowp vec4 v_col;
+
+void main()
+{
+	gl_FragColor = v_col;
+}

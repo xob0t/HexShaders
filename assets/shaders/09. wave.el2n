@@ -1,0 +1,61 @@
+// vertex shader
+
+uniform vec3      iResolution;           // viewport resolution (in pixels)
+uniform float     iGlobalTime;           // shader playback time (in seconds)
+uniform float     iTimeDelta;            // render time (in seconds)
+uniform int       iFrame;                // shader playback frame
+uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
+
+uniform mediump float u_size;
+attribute mediump vec2 a_pos;
+varying lowp vec4 v_col;
+
+vec2 fragCoord;
+//$a|a|Separator| $
+/// -----------------------------
+/// textures(hex.png)
+/// $pointsInTheRow|64|Range|Detail level;16;128$
+/// $timeScale|10|Range|Time scale;2;20$
+    #define iTime iGlobalTime * 0.1
+/// -----------------------------
+/// shader code before MAIN
+
+highp float rand(vec2 co)
+{
+    highp float a = 12.9898;
+    highp float b = 78.233;
+    highp float c = 43758.5453;
+    highp float dt= dot(co.xy ,vec2(a,b));
+    highp float sn= mod(dt,3.14);
+    return fract(sin(sn) * c);
+}
+
+void main()
+{
+
+	vec2 pos = a_pos;
+	vec3 color = vec3(0);
+	
+	color.g += 1. - pow(abs(sin(pos.x * 100. + iTime * 0.5) * abs(sin(iTime*0.1)) + 4. - pos.y), 0.1);
+	color.b += 1. - pow(abs(cos(cos(pos.x) * 2. - iTime * 0.5) * cos(iTime*0.1) - (pos.y)), 0.1);
+	color.r += 1. - pow(abs(cos(sin(pos.x) * 2. - iTime * 0.5) * sin(iTime*0.1) - (pos.y)), 0.3);
+
+	color += color.r + color.g + color.b * 6. * (1. + mod(rand(vec2(iTime*0.1, iTime*0.1)), 0.01));
+
+	v_col = vec4(color*0.7, 1.0);
+	
+	
+	//v_col *= a_col;
+	gl_PointSize = u_size;
+	gl_Position =  vec4(a_pos.x, a_pos.y, 1.0, 1.0);
+}
+
+====
+// fragment shader
+uniform lowp sampler2D u_texture;
+varying lowp vec4 v_col;
+
+void main()
+{
+	gl_FragColor = v_col * texture2D(u_texture, gl_PointCoord);
+}

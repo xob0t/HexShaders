@@ -1,0 +1,46 @@
+uniform vec3      iResolution;           // viewport resolution (in pixels)
+uniform float     iGlobalTime;           // shader playback time (in seconds)
+uniform float     iTimeDelta;            // render time (in seconds)
+uniform int       iFrame;                // shader playback frame
+uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
+
+uniform mediump float u_offset;
+attribute mediump vec2 a_pos;
+attribute mediump vec2 t_pos;
+varying lowp vec4 v_col;
+
+vec2 fragCoord;
+// $cprt|url|Copyright|nick|skip$
+
+/// -----------------------------
+/// $pointsInTheRow|64|Range|Detail level;16;128$
+/// $slides|1|Range|Slide show (battery save);1;11|skip$
+/// $timeScale|10|Range|Time scale;2;20|skip$
+    #define iTime iGlobalTime * 0.1
+/// -----------------------------
+/// shader code before MAIN
+
+
+void main()
+{
+    fragCoord = (a_pos*.5 + .5) * iResolution.xy;
+    vec4 fragColor = vec4(0.0);
+/////////////------------
+
+
+
+/////////////--------------
+    v_col = fragColor;
+    gl_PointSize = 1.0;
+    gl_Position.xy = t_pos * 2.0 - 1.0;
+    gl_Position.zw = vec2(1.0);
+}
+
+====
+// fragment shader
+varying lowp vec4 v_col;
+
+void main()
+{
+    gl_FragColor = v_col;
+}

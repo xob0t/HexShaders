@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER_HINTS" />
+
+    <uses-feature
+        android:name="android.software.live_wallpaper"
+        android:required="true" />
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@android:style/Theme.DeviceDefault">
+
+        <activity
+            android:name="ru.serjik.hexshaders.premium.HexShadersActivity"
+            android:label="@string/app_name"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="ru.serjik.hexshaders.premium.HexShadersSettings"
+            android:theme="@style/Theme.DeviceDefault.NoTitle"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:exported="true" />
+
+        <service
+            android:name="ru.serjik.hexshaders.premium.HexShadersService"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_WALLPAPER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/live_wallpaper_description" />
+        </service>
+    </application>
+
+</manifest>

@@ -1,0 +1,161 @@
+#define texture texture2D
+
+uniform vec3      iResolution;           // viewport resolution (in pixels)
+uniform float     iGlobalTime;           // shader playback time (in seconds)
+uniform float     iTimeDelta;            // render time (in seconds)
+uniform int       iFrame;                // shader playback frame
+uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
+uniform sampler2D iChannel2;
+
+uniform mediump float u_offset;
+attribute mediump vec2 a_pos;
+attribute mediump vec2 t_pos;
+varying lowp vec4 v_col;
+
+vec2 fragCoord;
+// $cprt|https://www.shadertoy.com/view/Xsl3zX|Copyright|FabriceNeyret2|skip$
+
+/// -----------------------------
+/// textures(tex16.png,tex03.jpg)
+/// $pointsInTheRow|64|Range|Detail level;16;128|skip$
+/// $slides|1|Range|Slide show (battery save);1;11|skip$
+/// $timeScale|10|Range|Time scale;2;20|skip$
+    #define iTime iGlobalTime * 0.1
+/// -----------------------------
+/// shader code before MAIN
+
+//---  Galaxy --- Fabrice NEYRET  august 2013
+
+const float RETICULATION = $RETICULATION|30|Range|Strenght of dust texture;0;100$. * .1;  // 3.0 strenght of dust texture
+const float NB_ARMS = $NB_ARMS|3|Range|Number of arms;2;9$.;       //  5. number of arms
+//const float ARM = 3.;         // contrast in/out arms
+const float COMPR = .1;         // compression in arms
+const float SPEED = .1;
+const float GALAXY_R = 1./2.;
+const float BULB_R = 1./4.;
+
+//$a|a|Separator| $
+
+const vec3 GALAXY_COL = vec3($galaxy_col|50,50,50|RGB|Galaxy color$) * 0.01;
+//$a|a|Separator| $
+const vec3 BULB_COL   = vec3($bulb_col|2,9,12|RGB|Bulb color$) * 0.01;
+//$a|a|Separator| $
+const vec3 SKY_COL    = .5 * vec3($sky_col|10,30,50|RGB|Sky color$) * 0.01;
+//$a|a|Separator| $
+		
+#define t iTime
+
+// --- base noise
+float tex(vec2 uv) 
+{
+	float n = texture(iChannel0,uv).r;
+	
+#define MODE 3  // kind of noise texture
+#if MODE==0         // unsigned
+	#define A 2.
+	return n;
+#elif MODE==1       // signed
+	#define A 3.
+	return 2.*n-1.;
+#elif MODE==2       // bulbs
+	#define A 3.
+	return abs(2.*n-1.);
+#elif MODE==3       // wires
+	#define A 1.5
+	return 1.-abs(2.*n-1.);
+#endif
+}
+
+
+// --- perlin turbulent noise + rotation
+float noise(vec2 uv)
+{
+	float v=0.;
+	float a=-SPEED*t,	co=cos(a),si=sin(a); 
+	mat2 M = mat2(co,-si,si,co);
+	const int L = 7;
+	float s=1.;
+	for (int i=0; i<L; i++)
+	{
+		uv = M*uv;
+		float b = tex(uv*s);
+		v += 1./s* pow(b,RETICULATION); 
+		s *= 2.;
+	}
+	
+    return v/2.;
+}
+
+
+void main()
+{
+    fragCoord = (a_pos*.5 + .5) * iResolution.xy;
+    vec4 fragColor = vec4(0.0);
+/////////////------------
+
+	vec2 uv = fragCoord.xy/iResolution.xy-vec2(.5,.5);
+	uv.x *= iResolution.z;
+	uv.x+=.01;
+
+	vec3 col;
+	
+	// spiral stretching with distance
+	float rho = length(uv); // polar coords
+	float ang = atan(uv.y,uv.x);
+	float shear = 2.*log(rho); // logarythmic spiral
+	float c = cos(shear), s=sin(shear);
+	mat2 R = mat2(c,-s,s,c);
+
+	// galaxy profile
+	float r; // disk
+	r = rho/GALAXY_R; float dens = exp(-r*r);
+	r = rho/BULB_R;	  float bulb = exp(-r*r);
+	float phase = NB_ARMS*(ang-shear);
+	// arms = spirals compression
+	ang = ang-COMPR*cos(phase)+SPEED*t;
+	uv = rho*vec2(cos(ang),sin(ang));
+	// stretched texture must be darken by d(new_ang)/d(ang)
+	float spires = 1.+NB_ARMS*COMPR*sin(phase);
+	// pires = mix(1.,sin(phase),ARM);
+	dens *= .7*spires;	
+	
+	// gaz texture
+	float gaz = noise(.09*1.2*R*uv);
+	float gaz_trsp = pow((1.-gaz*dens),2.);
+
+	// stars
+	//float a=SPEED*t, co=cos(a),si=sin(a); 
+	//mat2 M = mat2(co,-si,si,co);
+	// adapt stars size to display resolution
+	float ratio = .8*iResolution.y/256.0;
+	float stars1 = texture(iChannel1,ratio*uv+.5).r, // M*uv
+	      stars2 = texture(iChannel0,ratio*uv+.5).r,
+		  stars = pow(1.-(1.-stars1)*(1.-stars2),5.);
+	
+	//stars = pow(stars,5.);
+
+	// mix all	
+	col = mix(SKY_COL,
+			  gaz_trsp*(1.7*GALAXY_COL) + 1.2*stars, 
+			  dens);
+	col = mix(col, 1.2*BULB_COL, bulb);
+		
+	fragColor = vec4(col,1.);
+
+/////////////--------------
+    v_col = fragColor;
+    gl_PointSize = 1.0;
+    gl_Position.xy = t_pos * 2.0 - 1.0;
+    gl_Position.zw = vec2(1.0);
+}
+
+====
+// fragment shader
+varying lowp vec4 v_col;
+
+void main()
+{
+    gl_FragColor = v_col;
+}

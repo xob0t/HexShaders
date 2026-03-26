@@ -1,0 +1,112 @@
+#define texture texture2D
+
+uniform vec3      iResolution;           // viewport resolution (in pixels)
+uniform float     iGlobalTime;           // shader playback time (in seconds)
+uniform float     iTimeDelta;            // render time (in seconds)
+uniform int       iFrame;                // shader playback frame
+uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
+uniform sampler2D iChannel2;
+
+uniform mediump float u_offset;
+attribute mediump vec2 a_pos;
+attribute mediump vec2 t_pos;
+varying lowp vec4 v_col;
+
+vec2 fragCoord;
+// $cprt|https://www.shadertoy.com/view/ldlXRS|Copyright|nimitz|skip$
+
+/// -----------------------------
+/// textures(tex16.png)
+/// $pointsInTheRow|64|Range|Detail level;16;128|skip$
+/// $slides|1|Range|Slide show (battery save);1;11|skip$
+/// $timeScale|10|Range|Time scale;2;20|skip$
+    #define iTime iGlobalTime * 0.1
+/// -----------------------------
+/// shader code before MAIN
+
+//Noise animation - Electric
+//by nimitz (stormoid.com) (twitter: @stormoid)
+
+//The domain is displaced by two fbm calls one for each axis.
+//Turbulent fbm (aka ridged) is used for better effect.
+
+#define time iTime*0.15
+#define tau 6.2831853
+
+mat2 makem2(in float theta){float c = cos(theta);float s = sin(theta);return mat2(c,-s,s,c);}
+float noise( in vec2 x ){return texture(iChannel0, x*.02).x;}
+
+float fbm(in vec2 p)
+{	
+	float z=2.;
+	float rz = 0.;
+	vec2 bp = p;
+	for (float i= 1.;i < 6.;i++)
+	{
+		rz+= abs((noise(p)-0.5)*2.)/z;
+		z = z*2.;
+		p = p*2.;
+	}
+	return rz;
+}
+
+float dualfbm(in vec2 p)
+{
+    //get two rotated fbm calls and displace the domain
+	vec2 p2 = p*.7;
+	vec2 basis = vec2(fbm(p2-time*1.6),fbm(p2+time*1.7));
+	basis = (basis-.5)*.2;
+	p += basis;
+	
+	//coloring
+	return fbm(p*makem2(time*0.2));
+}
+
+float circ(vec2 p) 
+{
+	float r = length(p);
+	r = log(sqrt(r));
+	return abs(mod(r*4.,tau)-3.14)*3.+.2;
+
+}
+
+void main()
+{
+    fragCoord = (a_pos*.5 + .5) * iResolution.xy;
+    vec4 fragColor = vec4(0.0);
+/////////////------------
+
+	//setup system
+	vec2 p = fragCoord.xy / iResolution.xy-0.5;
+	p.x *= iResolution.x/iResolution.y;
+	p*=4.;
+	
+    float rz = dualfbm(p);
+	
+	//rings
+	p /= exp(mod(time*10.,3.14159));
+	rz *= pow(abs((0.1-circ(p))),.9);
+	
+	//final color
+	vec3 col = vec3($colorrr|20,10,40|RGB|Final color$) * 0.01 / rz;
+	col=pow(abs(col),vec3(.99));
+	fragColor = vec4(col,1.);
+
+
+/////////////--------------
+    v_col = fragColor;
+    gl_PointSize = 1.0;
+    gl_Position.xy = t_pos * 2.0 - 1.0;
+    gl_Position.zw = vec2(1.0);
+}
+
+====
+// fragment shader
+varying lowp vec4 v_col;
+
+void main()
+{
+    gl_FragColor = v_col;
+}

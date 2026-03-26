@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Hex Shaders Premium</string>
+    <string name="take_a_look_at_premium_version">Take the premium version</string>
+    <string name="shader_program">Shader program</string>
+    <string name="shader_live">Look at the Shaders Live in the PlayStore</string>
+    <string name="tap_to_set_the_wallpaper">Tap to set the wallpaper</string>
+    <string name="something_goes_wrong">Something went wrong. Please reinstall the application from the Google Play Store</string>
+    <string name="open_google_play_store">Open Google Play Store</string>
+    <string name="reset_to_defaults">Reset to defaults</string>
+</resources>

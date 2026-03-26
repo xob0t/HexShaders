@@ -1,0 +1,174 @@
+#define texture texture2D
+
+uniform vec3      iResolution;           // viewport resolution (in pixels)
+uniform float     iGlobalTime;           // shader playback time (in seconds)
+uniform float     iTimeDelta;            // render time (in seconds)
+uniform int       iFrame;                // shader playback frame
+uniform vec4      iMouse;                // mouse pixel coords. xy: current (if MLB down), zw: click
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
+uniform sampler2D iChannel2;
+
+uniform mediump float u_offset;
+attribute mediump vec2 a_pos;
+attribute mediump vec2 t_pos;
+varying lowp vec4 v_col;
+
+vec2 fragCoord;
+// $cprt|https://www.shadertoy.com/view/4sycDK|Copyright|dila|skip$
+
+/// -----------------------------
+/// textures(tex02.jpg)
+/// $pointsInTheRow|64|Range|Detail level;16;128|skip$
+/// $slides|1|Range|Slide show (battery save);1;11|skip$
+/// $timeScale|10|Range|Time scale;1;40|skip$
+    #define iTime iGlobalTime * 0.02
+/// -----------------------------
+/// shader code before MAIN
+
+
+mat2 rot(float x) {
+    return mat2(cos(x), sin(x), -sin(x), cos(x));
+}
+
+const float mk = 8.0;
+vec3 tuv = vec3(0.0);
+
+float udRoundBox( vec3 p, vec3 b, float r )
+{
+  return length(max(abs(p)-b,0.0))-r;
+}
+
+float map(vec3 p) {
+    vec2 bt = vec2(mk, 0.0);
+    vec2 dk = floor(mod(p.xz / mk * 2.0, 2.0)) * 2.0 - 1.0;
+    
+    float t = fract(iTime * 0.5) * 2.0;
+    float dt0 = smoothstep(0.0, 1.0, clamp(t, 0.0, 1.0));
+    float dt1 = smoothstep(0.0, 1.0, clamp(t - 1.0, 0.0, 1.0));
+    
+    float d = 1000.0;
+    for (int i = 0; i < 4; ++i) {
+        float fi = float(i);
+        float xo = mod(fi, 2.0) * 2.0 - 1.0;
+        float yo = floor(fi / 2.0) * 2.0 - 1.0;
+
+        vec2 po = vec2(xo, yo) * rot(3.141592 * 0.25) * sqrt(0.5);
+
+        vec3 r = p + vec3(po.x, 0.0, po.y) * mk * 0.5;
+        
+        r.x += dk.y * dt0 * mk * 0.5;
+        r.z += dk.x * dt1 * mk * 0.5;
+
+        vec2 fp = (fract(r.xz / mk) - 0.5) * mk;
+        vec3 q = vec3(fp.x, abs(p.y) - 4.0, fp.y);
+        
+        tuv = q;
+
+        float bss = 0.23;
+        vec3 bs = vec3(mk * bss, 0.25, mk * bss);
+    	float ba = udRoundBox(q - bt.xyx * 0.25, bs, 0.125);
+    	float bb = udRoundBox(q + bt.xyx * 0.25, bs, 0.125);
+        
+        vec3 cbs = vec3(0.4, 100.0, 0.4);
+        vec3 sf = vec3(-1.0, 0.0, 1.0) * 0.25;
+        vec3 dp = vec3(q.x, p.y, q.z);
+        
+        vec3 ca = dp + bt.xyx * sf;
+        float da = udRoundBox(ca, cbs, 0.25);
+
+        vec3 cb = dp - bt.xyx * sf;
+        float db = udRoundBox(cb, cbs, 0.25);
+        
+        float gb = min(ba, bb);
+        float pb = min(da, db);
+        
+    	d = min(d, min(gb, pb));
+    }
+    
+    return d;
+}
+
+vec3 normal(vec3 p)
+{
+	vec3 o = vec3(0.01, 0.0, 0.0);
+    return normalize(vec3(map(p+o.xyy) - map(p-o.xyy),
+                          map(p+o.yxy) - map(p-o.yxy),
+                          map(p+o.yyx) - map(p-o.yyx)));
+}
+
+float trace(vec3 o, vec3 r) {
+    float t = 0.0;
+    for (int i = 0; i < 32; ++i) {
+        t += map(o + r * t);
+    }
+    return t;
+}
+
+vec3 tex(vec3 p) {
+    vec3 ta = texture(iChannel0, p.yz).xyz;
+    vec3 tb = texture(iChannel0, p.xz).xyz;
+    vec3 tc = texture(iChannel0, p.xy).xyz;
+    return (ta * ta + tb * tb + tc * tc) / 3.0;
+}
+
+
+void main()
+{
+    fragCoord = (a_pos*.5 + .5) * iResolution.xy;
+    vec4 fragColor = vec4(0.0);
+/////////////------------
+
+    vec2 uv = fragCoord.xy / iResolution.xy;
+    uv = uv * 2.0 - 1.0;
+    uv.x *= iResolution.x / iResolution.y;
+
+    vec3 r = normalize(vec3(uv, 1.0 - dot(uv, uv) * 0.12));
+    vec3 o = vec3(mk * 0.5, 0.0, 0.0);
+    
+    r.xy *= rot(3.141592 * -0.125);
+    r.xz *= rot(iTime * 0.5);
+
+    float t = trace(o, r);
+    vec3 w = o + r * t;
+    vec3 tc = tuv;
+    vec3 sn = normal(w);
+    float aoc = map(w + sn * 1.3);
+    
+    vec3 lp = vec3(mk, 1.5, mk);
+    
+    vec3 lv = w - lp;
+    float ld = length(lv);
+    lv /= ld;
+    float lk = max(dot(lv, -sn), 0.0);
+    lk /= 1.0 + ld * 0.01;
+    
+    float lt = trace(w + sn * 0.1, -lv);
+    float s = max(sign(lt - ld), 0.0);
+    
+    float f = 1.0 / (1.0 + t * t * 0.01);
+    vec3 ref = reflect(lv, sn);
+    float sp = pow(abs(dot(ref, r)), 12.0) * f * lk;
+    
+    float fs = mix(0.2, 1.0, s) * lk;
+    vec3 spc = sp * vec3(0.0, 1.0, 1.0);
+    vec3 fc = tex(tc * 0.25) * fs * f * aoc + spc;
+
+    fragColor = vec4(sqrt(fc), 1.0);
+
+
+/////////////--------------
+    v_col = fragColor;
+    gl_PointSize = 1.0;
+    gl_Position.xy = t_pos * 2.0 - 1.0;
+    gl_Position.zw = vec2(1.0);
+}
+
+====
+// fragment shader
+varying lowp vec4 v_col;
+
+void main()
+{
+    gl_FragColor = v_col;
+}
